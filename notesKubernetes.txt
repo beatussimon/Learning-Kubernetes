@@ -90,5 +90,28 @@ SUMMARY OF KUBERNETES COMPONENTS:
 These are te core or the basic concepts, just using these you can build pretty powerful kubernetes cludters
 
 K8 architecture explained:
+Master processes
+Each container will have multiple pods running in them 
+-> three processes must be installed on every node
+
+Worker nodes are the nodes that actually do the work, hence the name
+
+The first proccess that need to run on every node is a container runtime
+the processes that schedules the pods and the containers underneath is KUBELET
+which is process of kubernetes itself unlike container runtime
+Kubeletes interacts with both the node and the container 
+
+Kubeletes starts the pod with the container inside and assigning resources to the container like cou ram and storage resoutces 
+Usually kubernetes cluster is made up of multiple nodes which must have container services and kuberkets installed 
+
+The third service that is respnsible for fowarding requests from services to pods is kube proxy that must be installed on every node and kubeproxy have an intelligent fowarding inside that make sure the indoemation works in the perfotmant way with low overhead For example if my-app is make request to database the request is not fowaeded to a random database but the satabase pod inside the same pod and hence avoiding the netwoek overhead of sending the request to the other machine
+
+SUMMARY: 3Processes
+=>Kubelet
+=>Kube proxy  -these two must be installed on every node
+=> container runtime
+
+
+INTERRACTION WITH THE CLUSTER:
 
  
