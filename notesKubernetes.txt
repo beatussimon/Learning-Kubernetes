@@ -154,4 +154,100 @@ etcd just storest the cluster information used for master processes to communica
 These master processes are crucial and each master node runs its master processes where the API server is load balanced and etcd stores distributed storage across all the master nodes
 
 The actual hardware of master and worker resources differ, master nodes are importance but the have less load od work so they need less resources where the worker nodes do the actual work to  run those containers and therefore they need more resources and as the application scales you can add more nodes to meet the required application resources, so if you need the extra master nodes you get the bare metal server install the master processes and add it to kubernetes cluster
- and the same applies if you need two woeker nodes you get two bare metal servers install the woeker node processes and all it to kubernetes cluster and this way you can infinitely increase the power of kubernetes cluster as it replication level and resource demand increases 
+ and the same applies if you need two woeker nodes you get two bare metal servers install the woeker node processes and all it to kubernetes cluster and this way you can infinitely increase the power of kubernetes cluster as it replication level and resource demand increases
+
+
+MINIKUBE and KUBRCTL:
+Production cluster setup
+-> it will have multiple masters atleast two in production setup 
+-> and multiple worker nodes
+
+minikube is this one test/local cluster setup where it is a one node cluster  when master and worker processes both run on the same machine and this will have docker runtime pre-insalled
+
+so this minikube will create a virtual box on your laptop
+=> node runs in that virtual box 
+=> 1 k8s cluster
+
+which can be used for testing purposes 
+now you have a cluster you need a way to interact with your cluster and thats where this comes in:
+
+KUBECTL:
+kubectl is a commandline tool for k8 structure
+
+Note: Minicube runs both master and worker processes
+
+You first have to interact with the api server to do any kubernetes work
+ so to interact with Api server can be through api, ui or cli of which all of these are all clients
+
+and kubectl is the most poweful of all the clients
+
+
+IMPORTANT: kubectl isnt just for minikube clustet 	if yoou have a cloud cluster or hybrid cluster minikubectl is the one to interact with the setup
+
+!!!!Since minikube uses virtualization hence virtualization has to be enabled in your machine
+ and you need to install some tyoe jof some hypervisor 
+
+COMMANDS:
+Minikube start => Creates and start the cluster
+ options --vm-driver=hyperkit
+
+kubectl get nodes => gets status of nodes
+
+minikube status => also gets you the status of the running kubes
+
+kubectl version => gives the version of installed kubernetes -> this will show you the client and the server version of this 
+
+
+IMPORTANT:
+Minikube CLI is for starting or deleting the cluster
+
+Kubectl CLU is for configuring the minikube cluster
+
+BASIC KUBECTLCOMMANDS:
+Prequesities:
+Have minicube cli and kubectl installed in your system 
+
+You are going to be using kubectl for the control of anything
+
+commands: 
+kubectl get nodes
+kubectl get pods
+kubectl get services
+
+to create anything kubectl create -h will give you the man pages for creating
+
+In creating there is no pod option, there is an abstraction and that is deployment and that will create pods underneath
+
+to create the creation is made from image and this is the command:
+kubectl create deployment nginx-depl image=nginx
+
+-> this will download the latest image of nginx from docker Hub
+
+To see the seployments you can do : kubectl get deployment and if you want to get the pod: kubectl get pod
+
+when i create the deployment it is the blueprint for creating the pods and the most basic configuration is providing the name and the image 
+
+
+Between deployment and a pod there is another another abstraction layer called replicaset which is autimatically managed by kuberneter deployments 
+
+command to get the replicaser: kubectl get replicaset
+
+the podname has the prefix of deployment and replicaset is and its own id
+
+the replocaset is basically managing the replicas of a pod, You wont be manually required to create or delete a replicaset file but you gonna be working with deployments directly  to create multiple replicas you can provide te options to do that 
+
+
+check this out:
+a deployment manages a:
+replicaset manages a:
+a pod is an abstraction of 
+a container 
+
+ thats the hierrachy and everything below the deployment should be managed by kubernetes
+
+to edit:
+kubectl edit deployment [name] => this will give you the auto generated configuration file with default values because at the command if you gave name and an image everything else is auto generated
+
+and if you edit it will open the text editor and yoou can change some configurations and after saving the info the old pod eg. if you changed the image version will be terminated and the new one will be start running 
+
+51:37
