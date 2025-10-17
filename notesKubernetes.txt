@@ -1,0 +1,21 @@
+Kubernetes was developed by google, it manages containers
+
+Open source container orchastration tool 
+Helps you manage them in different environments -> like physical machiners, cloud machines or vms
+
+ Managing thousands of containers spread through different environments throgh scripts can be tedious
+
+also the trend from monolith to microservices resulted into the use of thousands of containers
+
+Hence the increased demand for the proper way of managing those hundreds of containers
+
+Tools like kunernetrs guarantee the folloeing:
+=> High availability no downtime
+ -> scalability and high performance
+=> disaster recovery || back up and restore
+
+K8 components explained:
+Node => Is a simple server or a virtial machine
+
+Pod => is a smallest unit of k8s
+	it is an abstracion of a container, what pod does is create these running environents or a layer o	on top of a container, and the reason is kubernetes wants to abstract away the 
