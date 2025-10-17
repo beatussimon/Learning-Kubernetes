@@ -18,4 +18,77 @@ K8 components explained:
 Node => Is a simple server or a virtial machine
 
 Pod => is a smallest unit of k8s
-	it is an abstracion of a container, what pod does is create these running environents or a layer o	on top of a container, and the reason is kubernetes wants to abstract away the 
+	it is an abstracion of a container, what pod does is create these running environents or a layer o	on top of a container, and the reason is kubernetes wants to abstract away the container runtime and 	container technologies so that you can replace them if you want to and because you dont want to work d	directly with docker or container technology you use in kubernetes so that you only interact with kubernetes layer
+	 Pod us meant to run 1 container inside it 
+
+'
+Kunernetes offers a virtual netwoek out of the box which which means each pod gets its own ip adress
+the pod gets its own ip adress not the container and each pod can communicate with each other using and jip adress which is an internal ip adress and not a public one, so ,my container can communicate with the database using an ip adress 
+
+Note: Pods in kubernetes are ephemeral meaning they can die very easly
+
+and in case of anything going wrong the pod will die and the new one will be creates and a new adress will be created and assigned a new ip adress, This makes it inconvinient as if comminication was through ip asress if the pod dies then the one cretes will lose communication with the newly created pos as they have different ip adress
+
+due to that another component of kubernetes called service is used
+
+
+SERVICE and INGRESS:
+Service is a permanent ip adress that can be attached to each pod so my-app will have its own service and pod will have its own service, the lifecycle of a pod and a service are not connected so even if the pod dies the ip adress will stay 
+
+External service is a service that opens the services to the external sources
+
+Insteas of the esternal request going directly to the intenal services they will fitstly go to ingress then the fowarded to the internal services
+
+CONFIGMAP and SECRETS:
+configmap is an external configuration to your application eg urls of the databases etc, also you can put the database username and passwords but this would be insecure
+
+secrets: its just like config map but used to secure secret data
+They are not stored in plain text but in base 64 encoded format
+
+The built in security mechanisms are not enabled ny default
+
+You can use this as an environmenal variable or a proprty value
+
+
+VOLUNES:
+Data stprage and storage:
+How it accomplishes this is by attaching the actual phydical drive to your pod which means it can be on the same local machine which means the same pod is running ot it could be a remote storage outside of a kubernetes cluster, it could be cloud storage or on premise storage which is not a part of kubernetes structure	you just have a reference to it
+
+ KUbernetes doesnt hanhle data persistence so you hace to handle it yourself 
+
+
+DEPLOYMENT and STATEFUL SETS:
+IF my pod dies then i will have downtime which is a bad thig as my site wont be accesible
+
+A service has two functionalities:
+=> provides permanent ip adress
+=> is a load balancer -> will catch a request and foward it to the the service which is least busy
+
+To create a new pod you woulnt create another pod but define a blueprint and specify the number of pods you want to run. That blueprint is called deployment.
+
+And you wont be working with pods you will be working with deployments because there you can specify the number if pods you want ans you can scale up or down number of replica of pods you need.
+
+Note: Pod is layer of abstraction on top of containers and deployments are a layer of abstraction on top of pods
+
+Now if one replicas of your application dies the service will foward the request to another one so that the application will be accesible to the user 
+
+You cant replicate database using deployments, reason being database has state meaning its data this means if we have the replicas of database they will have to access the same storage and you will need some mechanisms to know which services are writing to that storage and which are reading from what storage in order to avoid data inconsistencies
+
+deployments are for stateless apps
+statefulSet for stateful apps or databases => the reads and writes for the databases ara synchronized
+
+Deploying stateful sets can be tedious and thats why its common to host the stateful applications outside the container ans the stateless ones inside as they easly scale withought having to worry about data losses
+
+SUMMARY OF KUBERNETES COMPONENTS:
+=> Pod - abstraction of containers
+=> Service - communication between pods
+=> Ingress - used to route traffic into the cluster
+=> External configuration usind Configmaps and Secrets
+=> Volumes - handles data persistence
+=> Blueprints using deployments and statefulSets
+
+These are te core or the basic concepts, just using these you can build pretty powerful kubernetes cludters
+
+K8 architecture explained:
+
+ 
