@@ -114,4 +114,44 @@ SUMMARY: 3Processes
 
 INTERRACTION WITH THE CLUSTER:
 
- 
+How to schedule a pod?
+monitor?
+reschedule or restart a pod?
+join a ner node?
+
+All these processes are done by master nodes: 4 of these process are:
+
+
+=> Api server -> is like a cluster gateway its a way you can interact with the woeker nodes using kubernetes dashboard or kubelet cli
+it acts as a gate keeper  for authentication to make sure only the authenticated users gets to the cluster
+
+if you have a request => API server => Validates request => other processes => pod 
+and if you eant to query the cluster health or the status of your deployment you make the request throgh the API server and it gives you the response 
+
+2ndly: Scheduler
+Schedile a new pod: API server -> scheduler => pod(the secheduler is intelligent to decide on which node pod will be scheduled or bext component will be scheduled)
+
+Firstly it will look at your request and see how muvh of the resources you need and its gonna go through the woeker nodes and see the availavle resources in each and one of them, on the least busy is when the pod will be scheduled
+
+TIP: Scheduler decides on which node the new pod will be scheduled, the process that actually start that container is a cubelet 
+
+
+#rprocess: Controller manager
+It detects state changes like crashes, and tries to recover the cluster state as soon as possible 
+
+so contoller manager=> scheduler => Kubelet
+
+
+4thrly etcd
+This is like a cluster brain 
+Cluster changes are stored in the key value store, and the reason its a cluster brain is because all these mechanisms with controller etc woek works because of the etcd data
+For example how does resources available on each worker node, did the cluster state change? is the cluster healthy? all these are answered by having the info from etcd cluster
+
+what is not stored:
+The actual application data
+etcd just storest the cluster information used for master processes to communicate with the work processes and vice versa
+
+These master processes are crucial and each master node runs its master processes where the API server is load balanced and etcd stores distributed storage across all the master nodes
+
+The actual hardware of master and worker resources differ, master nodes are importance but the have less load od work so they need less resources where the worker nodes do the actual work to  run those containers and therefore they need more resources and as the application scales you can add more nodes to meet the required application resources, so if you need the extra master nodes you get the bare metal server install the master processes and add it to kubernetes cluster
+ and the same applies if you need two woeker nodes you get two bare metal servers install the woeker node processes and all it to kubernetes cluster and this way you can infinitely increase the power of kubernetes cluster as it replication level and resource demand increases 
