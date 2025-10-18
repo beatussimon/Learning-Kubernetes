@@ -251,3 +251,57 @@ kubectl edit deployment [name] => this will give you the auto generated configur
 and if you edit it will open the text editor and yoou can change some configurations and after saving the info the old pod eg. if you changed the image version will be terminated and the new one will be start running 
 
 51:37
+
+
+kubectl get replicaset: => this will show the old and the new replicas of the same pod
+
+
+DEBUGGING LOGS:
+kubectl logs <logname> -> shows what the application inside the pod actually logged
+
+describe gives you more information about the pod 
+command: kubectl describe [pod name]
+
+then run kubectl get pods
+
+and to see the logs => kubectl logs [pod-name]
+
+to get inside the terminal of the particular container or application
+command: kubectl exec -it [podname] --/bin/bash
+
+Deleting a deployment and Applying the configuration file:
+
+To get the deployments: kubectl get deployment
+
+IMPORTANT: deleting the deployment will delete the replicasets and the pods 
+command: kubectl delete deployment [deployment name]
+
+IMPORTANT: All the crude operations happens at the deployment level and everything underneath falls automatically
+
+When you create the deployments you should provide the options like:
+--name image option1 option2 and lots of other things you would want to configure and it would be impractical to write all that out on a commandline, so because of that in practice you would be working with the configuration files
+
+The way to do it is to use the apply command which takes in the configuration file
+
+command: kubectl apply -f [configuration-file.yaml]
+
+You make the configuration file and then apply tha and ithat will take care of creting the deployment 
+
+Summary:
+create a deployment => kubectl create deployment [name]
+Edit deployment => kubeclt edit deployment [name]
+Delete deployment -> kubectl delete deployment [name]
+
+status of different k8s components:
+kubectl get nodes | pod | services | replicaset| deployment
+
+Debugging pods:
+log to a console => kubectl logs [pod name]
+Get interactive terminal kubectl exec -it[podname] --bin/bash
+Get info about pods=> kubectl describe pod [pod name]
+
+Use configuration file to create deployments:
+Apply a configuration file  => kubectl apply -f [file name]
+Delete with a configuration file => kubectl delete -f [file name]
+
+
