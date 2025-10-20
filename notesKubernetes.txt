@@ -356,4 +356,255 @@ To get the more information about the pod: kubectl get pod -o wide
 kubectl get deployment nginx-deployment -o yaml and to save it > nginx-deployment-result.yaml it will be saved and you can make a comparison and try to see the added status  and other things added by kunernets by defailt
 
 
+COMPELETE DEMO PROJRCT:
+Overview of the components going to be involved:
+2 deployment/pod
+2 service (create internal service)
+1 config map
+1 secret
+
+Request flow through the browser
+Request comes from the browser,
+=> goes through the external service of the mongo express 
+=> which will foward it to the mongo express pod 
+-> the pod will then connect with internal service of mongo db and is basically the url here  (configmap)
+=> and will then fowart it to the mongodb data which will then authenticate the request using credentials\
+
+
+
+Firstly have the minicube cluster running
+
+kubectl get all gets you all the kubernetes componetns  that are in the cluster
+
+and for now if you are using minikube then the only running default cube is the default minikube cluster
+
+The first thing is creating a mongo db deployment
+
+You have to refer to the dockerhub repository to get to see the required configurations or the optional configurations that are available
+
+This will show you the default port and the environmental variables
+
+When you define the yaml file its going to be defined in the repostory so its the bad practive to include the username and password there inside the configuration file there its not supposded to be plave there 
+
+The secrets lives in k8s and not in the repository 
+the git one 
+
+Befire applying the deployment you first have to create the secrets where the credentials will live
+
+SECREt CONFIG FILE:
+Kind -> secret
+-> metadata/name => a random name
+type -> "opaque default for arbitary key value pairs
+
+
+Other types include the tls certificate for tls certificate files 
+the data with the following syntax will be used for the key value pairs:
+data:
+	mongo-root-username: the_name
+	mongo-root-password: the_passkey
+
+Storing data in secrets component doesnt make it autimatically secure 
+
+There are built in meachanisms like encyrption for basic security  which are not enavled by defauly 
+
+the simple way to do it is:
+command: echo -n 'username' | base64
+
+the output will be base 64
+and the the same will be applid for the password
+
+All that is preparation work
+
+IMPORTANT: You have to create sectets before the deployment if you are going to reference the secrets in the file you are creating, so the order of creation matters
+
+
+If you make the deployment of the secrets which doesnt exist yet you are going to get an error
+
+You have to apply the secrets before even applying the deployment otherwise you are goung to get an error
+
+after applying it to see the secrets you can run kubectl get secret  you will see if your secrets have been created
+
+Then after you already have your references you can now reference in your deployments
+in the deployments instead of values you have to say values from:
+env: 
+	name: some-env-variable
+	valueFrom: 
+		secretKeyRef:
+			name:secret-name(The actual name in your file not the name of the file the name in the name section after ApiVersion)
+So in the value you will output your key not the base64 actual value
+
+Yaml is very strict with the indetation 
+
+base64 just encodes the given string to remove the non ascii charaters but its not for encryption for actual encyrption you have to use tools like hascorp vault
+
+But this encoding is still good since you dont want your code in your repository 
+
+note: to apply the deployments:
+command: kubectl apply -f mongo.yaml
+
+to get everything:
+command: kubectl get all 
+
+To see whats going on in the pod you have to decribe the pod
+command: kubectl describe pod <podname>
+
+The second step is creating the external service so that the other pod can talk to this mongodb
+
+You can create separate files for yaml files or with --- you can start a new document
+
+Its okay to put deployment and a service in one file since they belong together
+
+The way to connect the service to the pod is using selector  -=> to connect to the pod through the label, by using the label of the pods the service through the labels can find the pods to attach to 
+
+port: service port
+targerPort: container port for deployment
+
+service port and targer port have tp match, They can be different but under what conditions??
+ChatGPT said:
+
+Great question! In Kubernetes, Service port and targetPort can be different, and this is actually a common and useful feature. Let me break down what each means and when you’d want them to match or differ.
+
+What are port and targetPort in a Kubernetes Service?
+
+port (or service port):
+This is the port that the Service exposes to other pods or clients inside the cluster (or outside, if it's a NodePort or LoadBalancer service). It's the port clients use to connect to the service.
+
+targetPort:
+This is the port on the pod/container that the Service routes traffic to. It’s the actual port the application inside the pod listens on.
+
+When do they need to match?
+
+When your Service’s exposed port is the same as the container’s listening port.
+
+Example:
+
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+
+
+This means the Service listens on port 80, and forwards traffic to pods on port 80.
+
+When and why can they be different?
+
+If your application listens on a different port than what you want exposed externally.
+
+Example:
+
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+
+
+Here, clients connect to the Service on port 80, but the Service forwards requests to port 8080 on the pod.
+
+Why would you do this?
+
+Abstraction:
+Clients don’t need to know the actual port your app listens on inside pods. You can expose a standard port externally (like 80 or 443) regardless of the internal pod port.
+
+Multiple ports:
+Your pod might have multiple containers or multiple ports open, and the Service selectively exposes some.
+
+Port remapping:
+You may want to unify or change the exposed port without changing the app’s container port.
+
+Additional notes
+
+If targetPort is not specified, it defaults to the same value as port.
+
+The targetPort can be specified either as a number or as a string referring to the port name defined in the Pod spec.
+
+Example with named ports:
+
+Pod Spec:
+
+containers:
+- name: app
+  ports:
+  - containerPort: 8080
+    name: http
+
+
+Service Spec:
+
+ports:
+- port: 80
+  targetPort: http  # refers to containerPort named "http"
+
+Summary
+Condition	port	targetPort	Explanation
+Simple, same port exposed	80	80	Service port matches container port
+Expose different port externally	80	8080	Service port is 80; pod listens on 8080
+Use named ports	80	"http"	targetPort refers to named containerPort
+targetPort omitted	80	80 (default)	targetPort defaults to port value
+
+If there are multiple k8d components defined in the same yaml file then the k9s will know which has not changed and what has changed when you apply them
+
+If you edit both then both deployment and service will be changed
+
+to see what port is connected to what port then you can run kubectl describe service and will list the target port and you can see the ports connection or mapping
+
+to get extra information about the pos and to what service is connected to you can:
+command: kubectl get pod -o wide
+
+To get all the componets you can:
+command: kubectl get all and you can grep them by name and get the exact pod you are looking for 
+
+Next we are going to configure the mongo service and mongo express and create configmaps where the satabase utl is gonna be 
+
+
+For the place to add the adress of the mongo database you can add it to the yaml file directly or you can use the configMap
+
+configMap:
+=> external configuration
+=> centralized
+=> Other components can use it
+
+and then you can reference that external configuration in that file when the configuration is needed
+
+configMap configuration file:
+kind: configMap
+metadata/name: a random name
+
+data: which is the key value pairs
+server name is the name of the service and its simple as that and that is going to be the database name url
+
+
+Just like the secrets the order of execution matters, you have to apply the config files before you can apply them: IOW the configMap must be already in the cluster before you can reference it
+
+
+The way you can reference the config maps inside the deployment is very similar to secrets and now instead of configMapRef its now gonna be configMapKeyRef and as it was for the secrets the mane is the actual name that was used in the name key from the configuration yaml file
+
+
+
+External service to access Mongo from the browser
+
+In practice you never have service without deployments so it makes sense to put them together
+
+The external service file is declared the same way as the service even the kind of service, so how do you make this service external?
+so below the selector im gonna put a type and the type of this is loadbalancer, (But internal service also is a load balancer so its kind of a bad name for sure)
+
+What the load balancer type of service does is it assigns an external ip adress and so accepts external requests
+
+also you will provide the node port:
+This is the port where this external ip adress will be open, That will be the port for external ip adress and the port you wull put into your browser
+
+
+AND THat must be between 30K to 32767
+
+Internal service would not apply to any type
+
+internal service(Cluster IP) is default; so you dont have to define it when creating the internal service, While the Loadbalancer type will have to be defined for an external service explicitly 
+
+and in the external ip adress inside the minikube shows up as pending but for the real machine the public ip adredd will show up
+
+
+minikube service service-name => This will assign external service an external ip adress
+
+CHAIN OF COMMAND:
+Browser request => Mongo express service => Mongo express pod -> Mongodb internal service => Mongodb pod 
+
 
