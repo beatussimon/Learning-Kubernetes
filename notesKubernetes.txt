@@ -724,4 +724,166 @@ Kubectx is what will install kubens, follow the guide for your system
 
 
 2:01:50
+kUBERNETES INGRESS EXPLAINED:
+External service vs ingress:
+You can access the ui in the browser using the external service, Where everything will
+be accessed via the public ip and the port, This is good for testing but this isno
+how the final product should look with the ip adresses but with the domain name  and 
+also you want the secure connection using https
+
+That is accomplished using k8s component called kubernetes ingress 
+so instead of external service you will have my-app-ingress and instead if external se
+nal service you will have an internal service. So you wont open your application ip
+adress through a port
+
+Now if you have request from the browser it is gonna reach first to ingressand that 
+will be redirected to the internal service and eventually to the pod
+
+
+External configuration for ingress vs ingress
+For the external service you have the kind: service which is of type:loadBalancer which means
+we are opening it to public via the ip adress; assign external IP adress to service
+and then you will provide the node port where the user will be able to access the application
+
+
+
+For ingress:
+kind: ingress
+then you have routing rules, and this basically defines the main adress order requests
+throug that host must be fowarded to the internal service
+
+the path you provide mean the URL path, and everything after the / in the url will be 
+defined by you, we will see the examples if the path configuration later
+
+You can use ingress to configure the https connection
+
+the http: key in the ingress config file doesnt correspond to the http:// in the browser
+
+
+That in the file is the protocal that incoming service gets fowarded to the internal service
+
+Backend is the target where the incoming requests wil be redirected to, and the serviceName key in 
+the yaml file configuration shoul correspond to the name of the service in metadata, and the servicePort 
+should correspond to the intenal service port (in the internal ports key)
+
+The difference between the external and internal service is that in internal service you dont have the third port
+in internal service the one called nodePort which starts from 30000 and the type is default type(clusterIP) not 
+instead of Loadbalancer
+
+Host: my-app.com => This should be a valid domain name
+and you should map that domain name to the node's ip adress which is the entry point
+
+
+If you create that ingress component alone wont be enough for ingress routing rules to work, what you need in 
+addition is an impelementation for ingress, and that impelementation is called an ingress controller
+
+Step one will be to install an ingress controller
+
+=> Which basically is a pod or set of pods running in your kubernetes cluster and thus evaluation and processing 
+of ingress rules
+
+What is ingress controller?
+The function is to evaluate all the rules you have defined in your cluster and this way to manage all redirections
+
+=>evaluates all the rules
+=> manages all the redirections
+=>This will be the entry point to the cluster for all the domain or subdomain rules you have configured
+and this will evaluate all the rules because you may have 50 rules or 50 components created in your cluster it will 
+evaluate all the rules and decide based on that which fowarding rule applies for that speciefic request
+
+In order to install these impelementation to your cluster you need to decide which impelementation you want to choose from 
+the whole link in description
+
+The one from k8s itself called K8s Ingress controller
+
+IMPORTANT TO UNDERSTAND: Interms of setting up the cluster, consider the environment in which the cluster is running
+if you are using cloud provider like aws etc that have out of the box k8s solutions or they have their own virtual
+their own virtual load balancer,Your flow will look like this:
+
+cloud load balancer(the external request will first hit this) => Will direct the request to the Ingress Controller
+This isnt the only way even in cloud there are different ways to impelement this but this is one of the common strategy
+
+The advantage of this is that you dont have to impelement the load balancer yourself, with minimal effort using cloud providers you have 
+the load balancer set up in no time and have it receive and redirect the requests to your Ingress Controller pod
+
+In the bare metal infrastructure:
+You will have to impelement that part yourself, You will have to configure the entry point to your kubernetes infrastructure yourself
+
+Different ways to do it(Link in the description)
+
+Generally speaking, either inside the cluster or outside as a separate server, you will have to provide an entrypoint and one of those type is an external proxy server
+Which can be a software or hardware solution that will take that role of a load balancer and an entry point to your cluster
+
+Basically this means you will have a separate server, and you'd give this a public ip adress and open the ports in order for the requests to be accepted 
+and this proxy server will act as an entry point to the cluster
+
+And this will be the only one accesible externally and none of your servers will be accesible outside the cluster, which is a good security practice
+
+request from browser=> proxy server => Ingress controller(chacks the ingress rules, will check which ingress rule applies to that speciefic request) => internal service fowarding will happen
+
+
+
+Ingress controller in Minikube:
+firstly install ingress controller in minikube
+command: minikube addons enable ingress
+	Tick => Ingress was succesifully enabled
+
+Automatically starts the k8s Nginx impelementation of Ingress Controller, this is one of many third-party impelementation which you can safely use in production environment
+and not just minikube
+
+if you
+command: kubectl get pods -n kube-system
+you will see the Nginx-ingress-controller running in your cluster
+
+Once you have that installed you can create an ingress rule that the controller can evaluate
+
+
+Namespace= same service and a pod
+
+after applying the ingress you can get it and you will have to wait for the ingress to be assigned an ip addr
+command: kubectl get ingress -n kubernetes-dashboard --watch(if you want to watch for when the ip adress is assigned)
+
+in /etc/hosts you can configure your mapping for the name and ip adress
+command: sudo vim /etc/hosts then add your mapping
+132.44.34.233: dashboard.com
+
+This mapping works locally
+
+
+Ingress default backend:
+this can be seen using the describe command providing the name and namespace
+This can be used to define custom error messages when page isnt found, when request come in you can't handle
+
+so that users can see some mini cool pages or some custom page you can redirect to the homepage
+or something like that
+
+All you got to do is create an internal service with the same name default-http-backend and the port number also create a pod or application that 
+that sends that custom error message's response
+
+You can define more routing granular for your applications inside the kunernetes cluster
+
+
+1st use: definining multiple paths for the same host
+All those defined paths are like this http/:www.hostname/pathname
+
+2nd usecase: Multiple domains or subdomains
+So in case of this configuration will have multiple hosts, where each host represents a subdomain and inside you have 1 path which redirects to 
+a partcular service
+
+
+CONFIGURING TLS SERVICE:
+The only thing you have to configure is define tls: key above the rules section with hosts and secretName: a reference which you will have to 
+create in a cluster that holds that tls certificate 
+
+In the secrets you will have tls.cert and tls.key of which are both base 64 encoded
+
+
+also when you create a tls certificate make sure you include the type to be tls
+type: 
+
+3notes to be made here:
+=> Data keys need to be exactly "tls.crt" and "tls.key"
+=> Values are file contents and not file paths or locations
+=> You have to create the secrets in the same namespace as the ingress component for it to be able to use that
+otherwise you cant reference a secret from another namespace
 
