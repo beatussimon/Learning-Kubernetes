@@ -607,4 +607,121 @@ minikube service service-name => This will assign external service an external i
 CHAIN OF COMMAND:
 Browser request => Mongo express service => Mongo express pod -> Mongodb internal service => Mongodb pod 
 
+KUBERNETES NAMESPACES EXPLAINED:
+What is a namespace:
+In k8s you can organize the cluster in namespaces, and you can have multiple namespaces in k8s cluster
+=> Think of it like a virtual cluster inside the cluster
+
+If you create a cluster the k8s gives you 4 namespaces by default
+if you type: 
+command: kubernetes get namespace you see the list of the namespaces
+Explanation:
+Kuberneters-dashboard only ships with minikube, it is speciefic to minikube installation, you wont have this in a standard cluster
+
+kube-system =>> this namespace is not meant for your use, shouldnt name anything or modify anything in kube-system
+
+the components which are deployed in kubesystem namespace are the system processes, master and kubectl processes
+
+kube-public =>> contains the publically accesible data, It has a configMap that contains cluster information which is accesible even without authentication 
+if you type kubectl cluster-info this will output the configurations
+
+
+kube-node-lease =>> Which is the recent to kubernetes
+Purpose:
+Holds the heartbeat of the nodes, each node has its associated lease in namespace
+determines the node availability
+
+Fourth name is the default namespaace:
+=> Will be used to create the resources that you are going to need, or the resource you create are going to be located there
+
+You can create your own namespace 
+command: kubectl create namespace <your_namespace>
+to list them: kubectl get namespace
+
+Another way is to use the namespace configuration file which is the better way to so that 
+
+WHY USE NAMESPACES:
+The best use of namespaces is to group the resources for instance you can have the database namespace and have inside of it all the required resources, Ypu can have monotoring namespaces where you deploy all the prometheous, and all the stuff it needs , You can have a namespace where the elastic search stack like kibana lives,  then you can have the other for nginx-ingress resources
+
+This is just one way of grouping your resources inside of the cluster
+
+According to the official k8s doc you shoulnt use namespaces if you have smaller projects, up to 10 users, But in general it is a good idea to group your namespaces
+
+EVEN IN MINIMUM PROJECT USE NAMESPACES
+
+Annother usecase scenario is when working in a team and all of them use the same deployment and would result into overriding the original file and can result into issues
+
+
+another use case scenarion is if you want to host both the stating and development environment in the same cluster and the importance of this it will make it easier in the usage of environments which are common to both
+
+
+
+another use case is when using the blue/green deployment, which means that in the same cluster and you want to have two versions of production, the one which is active now and the other one which is in the production next
+The versions of the apps in the blue and green will differe but these might be in different namespacces but they will need to use the same resources, and in this way they can use the common shared resources without having to set up a separeate cluster
+
+
+The other use case is to limit the acess and resources in the namespace, when working in teams, so that this way they are able to perform the crude operations in their own namespaces but cant do anything in any other namespace, this can minimize the risk if interfearences between teams. Each team has their own secure isolated environment
+
+The other thing is you can limit the resources each namespace consume eg. CPU, RAM and storage, since if 1 team consumes too much resources the other teams will eventually have less and their applications may not schedule
+
+In summary: Namespace uses
+=> Structure your components
+=> Avoid conflicts between teams
+=> Share services between different environments
+=> Access and resource limits on namespace level
+
+
+
+CHARACTERISTICS OF NAMESPACES:
+Before you decide to group or use namespaces:
+
+=> You cant acess most of the resources from another namespace
+=> Each namespace must define its own config map; the configMap for projectA in one namespace used to reference a database cant be used in projectB in another namespace
+=> The same applies to secrets => the credentials of the shared service, you will have to create the secrets in each namespace 
+
+=> Service is the resource that can be shared between namespaces
+=> in addition to  the name of the database the data:db_url will have .namespace_name
+
+Using that namespace you can acces that service from other namespaces
+
+and thats how you can use other services from other namespaces
+
+
+components which cant be created with a namespace:
+These live globally in a cluster and you cant isolate them or put them into a namespace
+
+Example: persistence volumes and nodes, so when you create a volume it is going to be accesible throughout the cluster because it is not in a namespace	and you can list these resources by:
+command: kubectl api-resources --namespaced=false
+
+And listing the resorces that are bound to a namesadd
+
+
+By default if you dont provide a name to a namespace it ceates them in a default NS , so even if you dont specify the namespace when reating or getting the components the -n default is passed down by default
+if you do 
+command: kubectl get configmap -o wide => you ge the comprehensive version and if you do 
+command: kubectl get configmap -o yaml => you will see the namespace of the file is default
+
+if you want to create the config file in your namespace:
+command: kubectl apply -f my-config-file.yaml --namespace=mynamespace
+
+Now if you want to get the file you created in a particular namespace, you will do the following:
+command: kubectl get configmap -n my-namespace => the -n flag 
+
+Its recommended to use the configuration file for creating namespaces instead of creating it over the kubectl cmd and this will document it better and if you are using automated deployment where you are just applying
+the configuration file then it is going to be much important, very convinient way to do it
+
+Change active Namespaces:
+Dream scenario: One team gets to work in their own namespace then it could be pretty annoying to add this nametad to every command(-n my-namespace), 
+For more convinience it can be changed to whatever namespace you choose
+
+
+Kubernetes dont have that out of the box but there is a tool called KUBENS
+After install running the command kubens will list the available namespaces and  highlight the active one
+and to change is simple:
+command: kubens my-namespace and that will switch the active namespace
+
+Kubectx is what will install kubens, follow the guide for your system
+
+
+2:01:50
 
