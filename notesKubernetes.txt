@@ -887,3 +887,156 @@ type:
 => You have to create the secrets in the same namespace as the ingress component for it to be able to use that
 otherwise you cant reference a secret from another namespace
 
+
+HELM: THE PACKAGE MANAGER OF K8s:
+What is helm => is a package manager for k8s, you can think of it like apt, yum or brew for kubernetes
+
+Its a convinient way to package k8s files and distribute them in public and private repositories
+
+For example if you wanted to use elastic search in k8s you would need to set up; statefulSet, 
+configMaps, secret, services and k8s user with permissions
+
+and if you were to create these files manually by searching for each and one of them separately on internet would be a tedious job
+until we have all these yaml files collected tested would take some time
+
+Since elastic search is standard used by the other people it would make sense, someone created this yaml file and someone packaged this file and made it available 
+to other people that use the same kuberneters cluster and that bundle of yaml files is called helm charts
+
+
+So using helm charts you can:
+=> Bundle of yaml files
+=> Create your own helm charts with helm 
+=> Push them to the helm repository to make it available to others or you can download and use the existing ones, that people
+	made available from different repositories
+
+All there database applications and monitoring apps that have this complex setup all have charts available in the helm repository
+
+so using the simple command you can set this up
+command: helm install some_chart 
+
+
+You can reuse the charts that someone has written already and sometimes its even the company that
+created the application 
+=> This capability of sharing charts is what made helm popular compared to its altenative tools
+
+searching alredy available k8s components you can do:
+command: helm search <keyword>
+
+or you can go on public repositories or helm Hub or other repositories that are available
+
+
+<All the relevant info in the description>
+
+
+Apart from public repositories there are private repositories
+=> This is to share them internally in the organization
+
+and that would make it valid to create a private repository
+
+Another functionality of helm is: Its a templating engine, Imagine having an application made up of s
+several microservices and you are deploying them in your k8s cluster, the deployment and the service of each are pretty much the same
+where the only difference is the version name and docker tags are different, So without helm you would
+write separate configuration for each file
+You would have multiple version files each having its own deployment name and version 
+
+Since the difference in those files are just couple of lines and most of the content is just the same 
+
+Using helm you can define a common blueprint for all the microservicesand the dynamic values that are
+gonna change replaced by the placeholders
+
+and that would be the template file 
+syntax: {{ values }} => that is the placeholder for the values from external configuration
+
+that external addition yaml file called values.yaml and there you can define all the values that
+you will use in that template file
+
+what values is in this(.values.parameter.something) is an object created based on the values supplied
+by values yaml file or through commandline with --set flag 
+
+This is very practical if you are using CI/CD 
+Because what you can do is in your build pipeline you can use those template files and replace the values on the fly before 
+deploying them
+
+Another use case where you can use helm features:
+Is when you deploy the same set of applications across different k8s clusters
+
+If you have development, staging and production environments you can make your own chart and use them
+to deploy across different k8s cluster environment. This can make the whole deployment process easier
+
+Helm chart structure:
+Directory structure:
+
+my_chart/
+	chart.yaml
+	values.yaml
+	charts/
+	templates/
+	...
+
+Chart.yaml is the file that contains all the meta information about the chart
+like name, version, dependencies etc.
+
+values.yaml is where all the values for the template files resides, and these will be the default 
+values that you can override later
+
+charts folder will have dependencies, that means that if this chart dependencies depends on this 
+chart then they will be stored there
+
+templates folder is where the template files are stored
+so when you execute 
+command: helm install <filename> ==> then template files will be filled with the values from 
+values.yaml file
+
+optionally you can have other files in this folder like license file or Readme file  etc.
+
+Values injection into template files:
+considering the values.yaml which is the default yaml file; it has these by default: imageName, port and version
+ and these default values can be overwritten in couple of different ways:
+
+First: -> When executing helm install	you can provide an altenative values yaml file using values flake 
+command: helm install  --values=my-values.yaml <chartname>
+
+The two files will be merged and will result into .values object which will look like this 
+
+Secondly: => You can provide the values using flake where you can define the values directly on the commandline
+
+helm install --set version=3.14.4
+
+ Its better organized and a good practice to provide the values instead of providing them on the commandline
+
+
+
+Third feature: Release management
+which is provided based on its setup
+
+Differences between version two and three
+in version two: Helm comes in two parts Helm client(helm CLI) and the server parts and the server part is called Tiller
+
+whenever you deploy helm chart using helm install <chartname>
+
+helm client will send files to Tiller that has to run in the k8s cluster and tiller will execute these requests 
+and create the components from these yaml files inside the k8s cluster
+
+ AND  this architecture offers an important feature called release management
+
+Whenever you sent the new configuration request then helm will send and save a copy of the file for
+future reference and thus creating a history of charts executions
+
+so running 
+command: helm upgrade <chartname>
+ the changes will be applied to the existing deployment instead of removing it and creating a new one
+
+incase some files or configurations are wrong or there are unwanted issues you can roll back to the previous version
+command: helm rollback <chartname>
+
+All this is possible because of the charts history that helm keeps when you send the requests to the server from the helm cliernt
+
+The downsides of tiller:
+Tiller has too much power in the k8s cluster, it can perform all the CRUDE operations and it has too much permissions
+=> This makes it a big security issue and this is why in helm3 they removed the tiller part and its just the helm binary now
+
+and solves the security concern
+
+
+
+
