@@ -1038,5 +1038,144 @@ Tiller has too much power in the k8s cluster, it can perform all the CRUDE opera
 and solves the security concern
 
 
+K8s VOLUMES EXPLAINED:
+Persist data in k8s using volumes:
+Persistent volume
+persistent volume claim
+Storage class
 
+When you restart the pod all the changes you have made in the database is gone
+
+because k8s dont give you data persistence out of the box
+
+Its something that you have to explicitly have to configure for each application that requires to persist 
+data between pod restarts
+You need storage that doesnt depend on the pod lifecycle and it will still be there when the pod dies and the 
+new one gets created, so that the new one can pick up where the old left off and it will read the data from the 
+the database to get up to date data
+
+However you dont know on what node the pod restarts, so your storage must be available on all pods and not just o
+one speciefic, so that when the new pod tries to read the data the up to date data is there
+
+
+You will need the high available storage which will survive even if the whole cluster crashes
+
+
+Those are the criterias that your database will need in order to be reliable
+
+
+
+persistent volume:
+This of pv as a cluster resource, just like ram or cpu
+created just like othe k8s components using yaml files 
+=> you have to define different parameters just like how much storage,
+
+Since pv is an abstract component it must take an actual physical storage like local hard drive  from the cluster nodes
+or external nfs servers outside te cluster or may be cloud storage or from GCP
+
+Where does this storage come from and who makes it available to the cluster || and thats the tricky part of data persistence in k8s
+
+
+Because k8s doesnt care about your actual storage, it gives persistenceVolume component as an interface to an actual storage that you as
+the maintainer/administrator you have to take care of.
+so:
+=> You have to decide what type of storage your cluster would need
+=> Yon need to create and manage them by yourself
+
+Managing meaning you need to do backups and make sure they are not corrupt etc.
+
+Think of k8s pv as an external plugin to your cluster
+
+Whether its a local or remote cluster you are managing
+
+The storage can be local, nfs servers or cloud storage
+
+Depending on the storage type some of the spec attributes may differ because they are speciefic to the 
+storage type
+
+In the k8s official documentation you can see the list of the volumes k8s support
+
+NOTE: Persistent volumes are not namespaced, Meaning they are accesible to the whole cluster and unlike
+other components that we saw like pods, services they are not in any namespace and they are available to the whole cluster and all the namespaces
+
+categories of pvs:
+Local vs remote namespaces:
+Each one has its usecase
+
+Local volumes violate 2 and 3 requirement for data persistence;
+xxx=> Not being tied to 1 speciefic node -> to each node equally b'se you dont know where the new
+pod will start 
+
+xxx-> Surviving in cluster crash scenario, Because of this you should always use remote storage
+
+
+Who creates these persistence volumes and when?
+Pv are resources like ram and cpu so the have to already be there BEFORE when the pod that uses the
+storage or depends on it is created	
+
+system admins creates the pv and the users will have  to figure out how to manoally create the configuration files to use the pc
+that the admin creates using the yaml configuration file
+
+Types of storage used in k8s refere to the doc
+
+its recommende to use remote storage as the local storage breaks two pv rules; which are availability from everywhere and 
+
+
+
+The k8s user user ta\hat deploys the spplication in the cluster either directly or theough ci pipeline
+
+The administtrator would be the one to configure this storage, Make sure the nfs server is there and configured or may be create and configure cloud
+storage that will be available for the cluster and then secondly create pvs components from this storage backends
+
+Get the info from develepers team on what type of storage their application would need and developers will know that storage is there and can be used 
+b their application
+
+But the developers will have to configure the yaml files in order to use those pvs components; In other words the applocation have to claim
+that volume storage and you do that by using another component of k8s called pv claim which are also created by using yaml configuration too
+
+
+The highlevel of how this woeks is pvc claims the volume with certain storage sizw which is defined in the pv claim and some additional characteristics like
+access type and whatever pv sastifies these claims will be used
+
+
+After that you have to use that claim in yout pods configuration, In your pod you have the volume value that references the PVC with 
+its name
+
+Note: Pods access the storage by using the claim as a volume, they request a valume through a claim , the claim than will go and try to find the pv in the 
+cluster that sastifies the claim and the claim will have the actual storage backend that it will create that  storage resource from and this way the pod
+will be able to use that actual storage backend 
+
+
+Note: Claims must exist in the same namespace as the pod using the claim
+
+Once the pod finds the volume through pvcl, the volume is then mounted(through a label check if this is true) and if you have multiple containers you can 
+decide whether to maount this storage in all containers or just some of those
++++sss>> Now the container can raead and write inside that storage and when the pod dies and new one gers created it will have access to the same storage
+and see all the changes the previous pods or previous containers made
+
+
+
+Why so many abstractions?
+Admin creates the pc => user creates claim to the pv
+
+As a user wanting to deploy your application to the cloud you dont care where the actual storage is, you know you want your storage to have persistence 
+and the storage being on aws gcp or anywhere doesnt matter as long as the data is safely stored
+
+
+
+
+These 2 volume types are different from the rest and should be mentioned separately:
+ConfigMap and secrets
+=>Both are local volumes,
+=>These two arent created via pv ot pvcs
+
+But rather their own components and managed by kubernetes itself
+
+Consider a case where you need a configuration file foe your prometheus pod or your messages brocker service
+
+like mosquirto  or when you need a certificate file mounted in your applocation:
+In both cases you need a file available to your pod  and how this woek is:
+
+=> You create a configMap or secret component
+=> You can mount that in your pod or container the same woy you woul mount pvs to your pv
 
