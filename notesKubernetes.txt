@@ -1365,6 +1365,70 @@ as well as taking care of and managing the backups
 
 Stateful applications are not perfect in containerized environments
 
+
+
+K8s services explained:
+Compelete overview of k8s services:
+=> What is k8s service and when do we need it?
+
+in k8s cluster each pod gets its own ip adress but the pods in k8s are ephemeral meaning they are destroyed frequently
+, the new one after restart gets the new ip adress
+For the service its ip adress is manual and stays even when the pod dies, so infront of every pod we set a service which
+has a stable persistent ip adress 
+
+Service also provides load balancing, the service will get the request and foward it to one of the pods
+Services are a good abstraction for a good coupling for communication with in the cluster and also from the external service
+like if you have browser request coming to the cluster or talking to an external database 
+
+
+=> Different service types
+  cluster ip service, headless service, nodePort services and Loadbalancer services
+
+clusterIP:
+default
+Sidecar container collects the logs of the main container or microservice and sends them to the final 
+destination in the database 
+pods will also have an IP from node range, each worker node will get a range of ip adresses which are internal in the cluster
+To see the ip adresses of the pods
+command: kubectl get pod -o wide
+This will give the extended output of the pod's information
+
+
+How does the request from the browser reach the pods is through the service, clusterIP or so called an internal service
+
+Service is just an abstraction it is just an ip adress that is accesible at and service just like the pods will be available at certain ports
+
+We define the service in ingress by its name and the dns resolution maps its name to the ip adress
+
+After the request reaches the service the service will know how to foward the request to one of its pods that are registered as the 
+service endpoints
+
+How do the service know which pod its managing or to foward the request to and how does it know which port to foward the request to  on that soeciefic pod
+===> the service identifies its member pods via selectors attribute in the spec: selectors: you can define the key value pairs which are labels to match that 
+	selector 
+so in the pods we assign the labels of pods in the metadata section, this name can be arbitary 
+===> and in the service yaml file we define selectors to match any pod that has all of these labels
+====> You can define more than 1 label you want to match 
+
+Synch matches all the pods replicas with those selectors and registers them as the endpoints and it should match all the selectors 
+not just one
+
+How does the service know which port to use as the pod can have more than one container?
+==> This is defined in the target port attribute  and when a request comes it will pick one of those ports randomly and it will send the request it receives to that
+speciefic pod on the port defined by the target port attribute in this case 3000
+
+k8s creates the endpont object with the same name as the service and keeps track of which pods are members/endpoints of the service
+
+Service communication port vs target port
+==>> Service port is arbitary  but target port must match the port, the container is litsening to 
+
+Take an example of the pod trying to access the database it will communicate with the database via the port that it has open(google this)
+
+2:24:00
+
+=> Difference between services and when to use which one
+
+
 => Kubernetes and generally containerized environments are perfectly fitting for stateless applications
 
 that do not have any state and data dependency, scaling and replocating them is super easy
