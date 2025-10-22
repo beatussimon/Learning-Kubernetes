@@ -1434,3 +1434,88 @@ Take an example of the pod trying to access the database it will communicate wit
 that do not have any state and data dependency, scaling and replocating them is super easy
 
 
+
+Take an example of the pod trying to access the database it will communicate with the database via the 
+port that it has open(google this)
+
+Lets say we have a monitoring port alongsode the mongo db for instance prometheus  and that will be tha mongodb exporter
+ and lets say that is running at port 2960 and thats where the application is accesible at 
+==> Now in the cluster we have a prometheus application that scrapes the metrics endpoint from these mongodb exporter containers from the pods endpoint that
+means service has to handle two different endpoint requests and also service has two of its own ports open for handling of these two different requests one
+from the client who wants to talk to the mongo db database and the other from the clients like prometheus that wants to talk to the mongo db exporter application
+and this is an example of a multiport service and 
+NOTE: when you have multiple ports defined in your application then you have to name your ports
+
+If its one port you can just leave it anonymous and the name attribute is optional 
+This is an example  of cluster ip type
+
+
+
+
+
+Headless Service:
+
+the requests are fowarded to the pod endpoints that are registered as ports, But imagine if one of the clients wants to communicate with the clients directly and selectively  or 
+directly withought going through the service, so in such a way a pod is not randomly selected
+
+Usecase: => when deploying stateful applications, like database and in such cases pod replicas are not identical but each one has an individual characteristics and states
+
+When do the direct communication get required; talking to the master node, synchronization between the master node and the worker node and on adding the replica the data is clined 
+ftom the last replica not just a random one so in this case you need direct comminication between the components
+
+For the client to connect to each pod individually client needs to figure out the ip adress of each pod and options to achieve this:
+==> to make api call to api server and it will return the list of the pods and ip adresses
+	But this will make your app too tied to k8s  API  => inefficient as will seek to get the whole list of all pods in the cluster everytime you want to connect to the pods
+
+==> k8s allows ip addresses discovery using DNS lookups, this works in this way When the client performs a dns lookup for the service the dns server returns a single ip adress(cluster ip)
+which belongs to the service 
+By setting the ip adress to none when creating a service the dns server will return the ip aderess of the pods instead instead of the services ip adress and now the client can look up to 
+get the ip adress ip adress of the pods that are members of that service and now the client can use that ip adress of the pod the client wants to connect to or all other pods
+
+NOTE: the way to set up a service to a headless service is by settting the clusterIP attribute to none
+If you list the pods widely you will see the one with no cluster ip
+
+
+==> services can be:
+-clusterIP which is default
+-nodePort 
+-Loadbalancer
+
+The nodePort makes the external traffic accesible on static or fixed port on each worker node and now instead of ingress the browser request will come directly to the worker node at the port
+the service specifications defines and the port that nodePort exposes is defined in the nodePort attribute in the ports  and remember to :
+NOTE: the nodePort has a predefined range from 30000 nto 32767  so you can have the values from that range as a nodePort value
+
+This meand the external traffic is available at the nodePort listed and the ip adress of the worker node but rember just like the clusterIP we have the port, when we create a node port service the 
+clusterIP to which the nodePort service will route is automatically created
+
+to list the services:
+command: kubectl ger svc	
+
+Remember: the service spans all the worker nodes 
+
+NodePort services are not secure as clients have a direct exposure to the worker nodes
+
+
+
+LoadBalancer service type:
+=: the service comes to be available externally through a cloud provider, each cloud has its own 
+	native load balancer impelementation and that is created and used whenever we create a load
+	balancer type; all major cloud providers offer this functionality 
+
+=>>>> Whenever we create LoadBalancer type the NodePort and ClusterIP are automatically created by
+k8s to which the external loadbalancer of the cloud platform will route the traffic to 
+
+	The nodePort created when creating the loadbalancer type is not available externally but through
+	through the loadbalancer itself and it can then direct the traffic to the node port to the worker
+	nodes and the clusterIP the internal service
+
+ In other words the loadbalancer typw is an extension of the nodePort type which itself is an extension of
+the clusterIP type
+=> Difference between services and when to use which one
+
+
+In realworld you woulnt use the nodePort fo external connections, you can use it to test some service quickly 
+but not for production use cases
+in real world you wold configure  ingress or loadbalancer that uses the cloud platform native load balanccr
+impelementation
+
