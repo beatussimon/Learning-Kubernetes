@@ -1239,4 +1239,134 @@ when a pod claims storage via pvc => the pvc will claim storage from the storage
 a pv that meets the needs of that claim using provisioner from the actual storage backend 
 
 
+K8s stateful sets explained:
+Its the k8s component that is used specifically for stateful applications
+Stateful application:
+=> databases mysql, elasticsearch, mongodb etc
+=> Any application that stores data to keep track of its state
+
+These are applications that tracks state by keeping that information in some storage
+
+stateless applications do not keep record of previous interactions(state), in each request is handled
+as compeletely new isolated interaction based entirely on the information that comes with it and sometimes
+stateless applications connect to the stateful applications to foward those requests
+
+Imagine the node-mongo application, the request that comes in dont depend on the previous information 
+but entirely on the payload in the request itself
+Typically such request will want to update or query the data and thats where you use the database and 
+the database will update the data based on the previous state or query the data from its storage
+
+so the database depends on the up to date data/state but:
+for the node app its just the passthrough for data query/update and it just processes the code
+
+Because of this difference they are deployed in different ways using different component in k8s and 
+deployment allows you to replicate that application in the cluster
+
+
+
+So stateful applications are deployed using statefulSet k8s component and just like deployment stateful 
+sets allows you to replicate the app and run multiple replicas of it
+
+They both manage pods based on container specification; You can configure storage in similar ways
+
+If they both do the same thing then what is the difference and why use different one for each type of 
+application
+
+
+Deployment vs stateful sets:
+-> replicating stateful application is more difficult
+-> Has other couple of requirement that stateless application do not have
+The java-mysql applicatin will be identical and interchangable, sp you can scale it using deployment pretty
+easly, deployment will create the required pods in random order with random hashes at the end of the podname 
+(eg. pod-name-3hj5jh53h4lk3243)
+-> one service load balances to any pod and when you delete them they get deleted in a random order or when you
+scale them down one random replica gets chosen to be deleted
+
+On the other hand:
+=> mysql pods can not be created/deleted at any time and in any otder
+=> cant be randomly adressed
+
+and the reason for that the pod replicas are not identical
+-> Pod identity => Infact they each have their own identity on top of the common blueprint they get created
+from and giving each pod its individual identity is what the statefulSet does different from deployment
+
+
+It maintains sticky identity for each pod
+Created from same specification but not interchangable
+Each has a persistence identifier that it maintains across any re-scheduling, meaning when a pod dies and it
+gets replaced by a new pod it keeps that identity
+
+Why is this identity neccesary
+this is a concept that you should understand about scaling databases in general: When you start a mysql pod 
+it will be used for reading and writing data and when you add a second one it can not act the same way 
+because if you allow two independent instances of mysql to change the same data you will end up with data inconsistencies
+
+There is a mechanism that allows one pod to write or change the data which is shared reading at the, reading at the same time 
+multiple instances of databases is compeletely fine
+
+The pod that is allowed to change the data is called tha master and the other are called slaves/worker nodes
+This is what differentiating one pod from the other, so not all pods are identical 
+
+These pods do not have acess to the same physical storage even though they use the same data they are not
+using the same physical storage of the data, they each have their own replicas of the storage  that each one 
+of them can access for itself, that means each replica at any time must have the same data as the other one
+
+And in order to achieve that they have to continously synchronize data, since the master is the only one allowed
+to change state then the workers must knpw about change to be up to date, so that they can update their own storage and 
+for the next query request
+
+There a mechanism for cluster data synchronization, When a new pod is created it first clone the previos pod and not any
+pod in the setup but always from the previous pods and once it has all the data cloned it then starts continous synchronization as well
+
+This means you can have temporary storage in the application any not persist the data at all since the data gets replicated by the pods
+so theoretically its possible but this means that all the data will be lost when all the pods dies, for instance in crashes. So its a good
+practice to use persistent volumes if losing the data is unacceptable which is the case in most database applications
+
+and with persistence storage data will survive even if the pods of all the stateful application dies, even if everything is wiped out
+Because persistent volumes lifecycle isnt tied to other component's lifecycle
+
+
+Each pod has its own persistent volume which is backed by a physical storage, since the pods info is stored in the database and is persistent
+when a pod dies and a new one is created the new one gets re-attached to the replacement pod using the identifier that is unique, the storagge 
+the state of the pod in saddition to the replicated data. Identity state is kept  and for reattachment to work it is important to use the remote
+storage
+
+Every pod has its own identifier, unlike the deployments the stateful sets gets fixed order names which is made up of the stateful name and 
+the ordinal
+syntax: $(statefulset name)-$(ordinal)
+
+
+The first one is master and comes the slaves in the order of startup
+
+NOTE: the next pod is only created if PREVIOUS is up and running, for instance if the first one is pending the next one cant be created at all
+
+==>> the same order is followed in deletion but in reversr order, for instance if you scale it down from three to one the deletion will start
+from the last one and it will wait until the lasr one has finished deleting before going to the next
+
+All these mechanisms are in place in order to protect the data and state depends on
+
+Each stateful pod gets dns endpoint from a service they are loadbalanced the same way as the service and the dns name:
+syntax: $(podname).$(gorverning service domain)
+
+
+
+These characretistics:
+=> having a predictable name
+=> having a fixed individual DNS name 
+Means that when the pod restarts the IP adress the ip adress will change but the name and endpoint stays the same
+The sticky identity makes sure that each replica pod can retain its state and its role even when it dies 
+and gets recreated
+
+Replocating stateful storage with its persistence storage requires a complex mechanism	k8s helps to set it up but youo still need to do a lot by yourself where k8s 
+doesnt provide out of the box solution
+
+For example you need to configure the cloning and data synchronization inside the stateful sets and also make the remote storage available 
+as well as taking care of and managing the backups
+
+Stateful applications are not perfect in containerized environments
+
+=> Kubernetes and generally containerized environments are perfectly fitting for stateless applications
+
+that do not have any state and data dependency, scaling and replocating them is super easy
+
 
