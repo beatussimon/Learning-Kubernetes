@@ -1179,3 +1179,64 @@ In both cases you need a file available to your pod  and how this woek is:
 => You create a configMap or secret component
 => You can mount that in your pod or container the same woy you woul mount pvs to your pv
 
+
+Summary of what we have covered so far:
+volume is just a directory with some data
+The volumes are accesiboe in containers in a pod
+How the directories are made available or backed by which storage medium are defined by speciefic 
+volume types(refer the documentation)
+
+
+To use the volumes the pod specifies what volume to provide for the pod in the specification volume
+attribute and inside the pod you can decide where you can mount that storage in that container
+Using volume mounts attribute in the container section
+
+Apps can access mounted data here in the MountPath(key also attribute)
+
+
+A pod can use different volumes of different types simulatineously 
+For instance you have an elastic app that uses certificates, aws elastic storage and the configuration 
+file storage then you can configure all three inside your pod or deployment
+
+In the volume mounts you can list all the storage mounts using their names
+
+To persist storage in k8s admins need to configure storage for the cluster
+Create persistent volumes and then developers can claim that pv using pvc
+
+Taking a scenario where multiple containers are deployed daily then the developers need to 
+ask the admins for the storage so that the admin can manually request for more storage from the
+cloud or storage providers and create hundreds of pv  for all the applications that need storage manually 
+that can be tedious, time consuming and can get messy quickly
+
+So to make this process more efficient; there is a third component of k8s called storage class sc provides
+persistent volumes dynamically; when ever a pvc claims it and this way creating or claiming storage in acluster
+is automated
+
+Storage class also gets created using yaml configuration file; example:
+kind: StorageClass
+=> sc creates pv dynamically in the background 
+
+REMEMBEr: we define the storage backend in the persistent volume component and now we have to define it in the
+in the storage class component and we do that using the provisioner attribute, which is the main part of the cluster
+configuration because it tells k8s which provisioner to use for a speciefic storage platform cloud providerto create the pv 
+components out of it
+
+So each storage backend has its own cloud provisioner that k8s offers internally prefixed with -"kubernetes.io" and there are internal 
+provisioners and for the external provisioners to explicitly go and find and use that in your storage class
+
+in addition to provisioner you configure parameters for storage we want to request for pv
+
+Storage class is another abstraction level that abstracts the underlying storage provider as well as parameters for that 
+storage or characteristics for that storage like what disktype
+
+How is it used (StorageClass)?
+same as pv it is claimed using pvc
+in the pvc you add an additional attribute called storageClass claim that references the storage class to be used to create a pv that 
+sastifies the claims of this pvc
+
+WORKFLOW: 
+when a pod claims storage via pvc => the pvc will claim storage from the storage class which will then provision or create
+a pv that meets the needs of that claim using provisioner from the actual storage backend 
+
+
+
