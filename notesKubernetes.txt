@@ -1514,6 +1514,9 @@ the clusterIP type
 => Difference between services and when to use which one
 
 
+You said:
+what if the same pod was revived intead tldr
+
 In realworld you woulnt use the nodePort fo external connections, you can use it to test some service quickly 
 but not for production use cases
 in real world you wold configure  ingress or loadbalancer that uses the cloud platform native load balanccr
